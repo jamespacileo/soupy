@@ -31,12 +31,21 @@ def should_bot_respond_to_message(message):
         return False, False
     is_random_response = random.random() < 0.01
     mentioned_users = [user for user in message.mentions if not user.bot]  # Get all non-bot mentioned users
-    if mentioned_users or not (
-            bot.user in message.mentions or is_random_response or message.channel.id in allowed_channel_ids):
-        return False, False
-
-    return (bot.user in message.mentions or is_random_response or
-            message.channel.id in allowed_channel_ids), is_random_response
+    return (
+        (False, False)
+        if mentioned_users
+        or bot.user not in message.mentions
+        and not is_random_response
+        and message.channel.id not in allowed_channel_ids
+        else (
+            (
+                bot.user in message.mentions
+                or is_random_response
+                or message.channel.id in allowed_channel_ids
+            ),
+            is_random_response,
+        )
+    )
 
 
 # Split message into multiple chunks of at least min_length characters.
@@ -70,7 +79,7 @@ async def on_message(message):
     global messages
     if message.author == bot.user:
         return
-        
+
     # Fetch message history
     messages = await fetch_message_history(message.channel)
 
@@ -108,7 +117,7 @@ async def on_message(message):
                 airesponse_chunks = split_message(airesponse)
                 total_sleep_time = RATE_LIMIT * len(airesponse_chunks)
                 await asyncio.sleep(total_sleep_time)
-        
+
         except openai.OpenAIError as e:
             print(f"Error: OpenAI API Error - {e}")
             airesponse = f"An error has occurred with your request. Please try again. Error details: {e}"
@@ -118,7 +127,7 @@ async def on_message(message):
             await message.channel.send(airesponse)
 
         except Exception as e:
-            print(Fore.BLUE + f"Error: {e}" + Fore.RESET)
+            print(f"{Fore.BLUE}Error: {e}{Fore.RESET}")
             airesponse = "Wuh?"
 
         # Send the response to the channel if there was no OpenAI API error

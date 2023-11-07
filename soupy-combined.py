@@ -104,7 +104,7 @@ async def on_message(message):
 
     if message.author == bot.user or message.embeds:
         return
-        
+
     should_respond, is_random_response = should_bot_respond_to_message(message)
     if should_respond:
         airesponse_chunks = []
@@ -116,20 +116,20 @@ async def on_message(message):
             async with channel.typing():
                 # Fetch and filter the message history
                 messages = await fetch_message_history(channel)
-                
+
                 messages = [
                                {"role": "system", "content": chatgpt_behaviour},
                                {"role": "user", "content": "Here is the message history:"}
                            ] + messages
                 messages += [{"role": "assistant", "content": "What is your reply?"}, {"role": "system", "content": chatgpt_behaviour}]
-                
+
                         # Printing each chat message on a new line for readability
                 print('Chat history:')
                 for msg in messages:
                     role = msg['role']
                     content = msg['content'].replace('\n', '\n               ')  # Replace newlines in content to align multi-line messages
                     print(f'  {role.capitalize()}: {content}')
-                
+
                 if is_random_response:
                     max_tokens = int(os.getenv("MAX_TOKENS_RANDOM"))
                 else:
@@ -146,7 +146,7 @@ async def on_message(message):
                 airesponse_chunks = split_message(airesponse)
                 total_sleep_time = RATE_LIMIT * len(airesponse_chunks)
                 await asyncio.sleep(total_sleep_time)
-        
+
         except openai.OpenAIError as e:
             print(f"Error: OpenAI API Error - {e}")
             airesponse = f"An error has occurred with your request. Please try again. Error details: {e}"
@@ -154,7 +154,7 @@ async def on_message(message):
             await message.channel.send(airesponse)
 
         except Exception as e:
-            print(Fore.BLUE + f"Error: {e}" + Fore.RESET)
+            print(f"{Fore.BLUE}Error: {e}{Fore.RESET}")
             airesponse = "Wuh?"
 
         if not openai_api_error_occurred:
